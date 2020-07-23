@@ -37,10 +37,10 @@ namespace ConsoleApp5
                         var balanceLineX = GetBalanceLine(db, country.Id, currentDate, true);
                         var balanceLineY = GetBalanceLine(db, country.Id, currentDate, false);
 
-                        var forLineX = balanceCountry.Where(x => x.Count > 1).Select(x => x.Coin)
+                        var forLineX = balanceCountry.Where(x => x.Count > 1).OrderByDescending(o => o.Count).Select(x => x.Coin)
                             .Except(balanceLineX.Where(x => x.Count > 8).Select(x => x.Coin)).ToList();
 
-                        var forLineY = balanceCountry.Where(x => x.Count > 1).Select(x => x.Coin)
+                        var forLineY = balanceCountry.Where(x => x.Count > 1).OrderByDescending(o=>o.Count).Select(x => x.Coin)
                             .Except(balanceLineY.Where(x => x.Count > 8).Select(x => x.Coin)).ToList();
 
                         //торгуем монетами нужными только по горизонтали
@@ -59,7 +59,7 @@ namespace ConsoleApp5
                             currentDate));
 
                         //распределяем оставшиеся монеты по всем
-                        var forAllOther = balanceCountry.Where(x => x.Count > 1).Select(x => x.Coin)
+                        var forAllOther = balanceCountry.Where(x => x.Count > 1).OrderByDescending(o => o.Count).Select(x => x.Coin)
                             .Except(forOnlyX)
                             .Except(forOnlyY);
                         newCountryTransactions.AddRange(Trade(country, country.Neighbors.ToList(), balanceCountry,
@@ -89,7 +89,7 @@ namespace ConsoleApp5
                                           $"TradeOut = {tradeOut}\r\n" +
                                           $"TradeIn = {tradeIn}\r\n" +
                                           $"Balance end = {balanceCountryEnd.Sum(x => x.Count)}");
-                        foreach (var balance in balanceCountryEnd)
+                        foreach (var balance in balanceCountryEnd.OrderBy(x=>x.Coin.Id))
                             Console.WriteLine($"Coin({balance.Coin.Country.Id}) = {balance.Count}");
                     }
 
