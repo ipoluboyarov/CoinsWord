@@ -12,30 +12,24 @@ namespace ConsoleApp5.Entity
             Neighbors = new List<Country>();
         }
 
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
+
         public string Name { get; set; }
         public ICollection<Country> Neighbors { get; set; }
     }
 
-    public sealed class Coin
+    public class Coin
     {
-        public Coin()
-        {
-            Transactions = new List<Transaction>();
-        }
-
-        //[Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
-        [Key]
-        [ForeignKey("Country")]
-        public int Id { get; set; }
+        [Key] [ForeignKey("Country")] public int Id { get; set; }
         public Country Country { get; set; }
-        public ICollection<Transaction> Transactions { get; set; }
+        public virtual ICollection<Transaction> Transactions { get; set; }
     }
 
     public class Transaction
     {
-        public int Id { get; set; }
+        [Key] public int Id { get; set; }
         public DateTime Date { get; set; }
         public virtual Country Sender { get; set; }
         public virtual Country Recipient { get; set; }

@@ -3,7 +3,7 @@ using ConsoleApp5.Entity;
 
 namespace ConsoleApp5
 {
-    class CountryContext : DbContext
+    internal class CountryContext : DbContext
     {
         public CountryContext() : base("DbConnection")
         {
@@ -25,7 +25,5 @@ namespace ConsoleApp5
                     m.ToTable("CountryNeighbor");
                 });
         }
-
-
     }
 }
