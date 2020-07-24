@@ -37,10 +37,10 @@ namespace ConsoleApp5
                         var balanceLineX = GetBalanceLine(db, country.Id, currentDate, true);
                         var balanceLineY = GetBalanceLine(db, country.Id, currentDate, false);
 
-                        var forLineX = balanceCountry.Where(x => x.Count > 1).OrderByDescending(o => o.Count).Select(x => x.Coin)
+                        var forLineX = balanceCountry.Where(x => (x.Count > 1||x.Coin.Country.Id==country.Id)).OrderByDescending(o => o.Count).Select(x => x.Coin)
                             .Except(balanceLineX.Where(x => x.Count > 8).Select(x => x.Coin)).ToList();
 
-                        var forLineY = balanceCountry.Where(x => x.Count > 1).OrderByDescending(o=>o.Count).Select(x => x.Coin)
+                        var forLineY = balanceCountry.Where(x => (x.Count > 1 || x.Coin.Country.Id == country.Id)).OrderByDescending(o=>o.Count).Select(x => x.Coin)
                             .Except(balanceLineY.Where(x => x.Count > 8).Select(x => x.Coin)).ToList();
 
                         //торгуем монетами нужными только по горизонтали
@@ -59,7 +59,7 @@ namespace ConsoleApp5
                             currentDate));
 
                         //распределяем оставшиеся монеты по всем
-                        var forAllOther = balanceCountry.Where(x => x.Count > 1).OrderByDescending(o => o.Count).Select(x => x.Coin)
+                        var forAllOther = balanceCountry.Where(x => (x.Count > 1 || x.Coin.Country.Id == country.Id)).OrderByDescending(o => o.Count).Select(x => x.Coin)
                             .Except(forOnlyX)
                             .Except(forOnlyY);
                         newCountryTransactions.AddRange(Trade(country, country.Neighbors.ToList(), balanceCountry,
@@ -122,14 +122,18 @@ namespace ConsoleApp5
                 var cntCoin = balance.Count / tradeNeighbors.Count();
                 var remCoin = balance.Count % tradeNeighbors.Count();
 
-                transactions.AddRange(tradeNeighbors.Select((t, i) => new Transaction
+                //TODO: сделать! свои монеты страна не берет!!!
+                for (var i = 0; i < tradeNeighbors.Count; i++)
                 {
-                    Date = currentDate,
-                    Coin = balance.Coin,
-                    Sender = country,
-                    Recipient = t,
-                    Count = cntCoin + (remCoin > i ? 1 : 0)
-                }));
+                    transactions.Add(new Transaction()
+                    {
+                        Date = currentDate,
+                        Coin = balance.Coin,
+                        Sender = country,
+                        Recipient = tradeNeighbors[i],
+                        Count = cntCoin + (remCoin > i ? 1 : 0)
+                    });
+                }
 
                 countSendCoins += balance.Count;
             }
