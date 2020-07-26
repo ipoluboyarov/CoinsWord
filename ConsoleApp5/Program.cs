@@ -11,7 +11,7 @@ namespace ConsoleApp5
         {
             using (var db = new CountryContext())
             {
-                CreateWord(db);
+                CreateWorld(db);
                 bool isFull;
                 var currentDate = Convert.ToDateTime("01/01/2020");
                 var countries = db.Countries.ToList();
@@ -37,10 +37,10 @@ namespace ConsoleApp5
                         var balanceLineX = GetBalanceLine(db, country.Id, currentDate, true);
                         var balanceLineY = GetBalanceLine(db, country.Id, currentDate, false);
 
-                        var forLineX = balanceCountry.Where(x => (x.Count > 1||x.Coin.Country.Id==country.Id)).OrderByDescending(o => o.Count).Select(x => x.Coin)
+                        var forLineX = balanceCountry.Where(x => (x.Count > 1 || x.Coin.Country.Id == country.Id)).OrderByDescending(o => o.Count).Select(x => x.Coin)
                             .Except(balanceLineX.Where(x => x.Count > 8).Select(x => x.Coin)).ToList();
 
-                        var forLineY = balanceCountry.Where(x => (x.Count > 1 || x.Coin.Country.Id == country.Id)).OrderByDescending(o=>o.Count).Select(x => x.Coin)
+                        var forLineY = balanceCountry.Where(x => (x.Count > 1 || x.Coin.Country.Id == country.Id)).OrderByDescending(o => o.Count).Select(x => x.Coin)
                             .Except(balanceLineY.Where(x => x.Count > 8).Select(x => x.Coin)).ToList();
 
                         //торгуем монетами нужными только по горизонтали
@@ -89,7 +89,7 @@ namespace ConsoleApp5
                                           $"TradeOut = {tradeOut}\r\n" +
                                           $"TradeIn = {tradeIn}\r\n" +
                                           $"Balance end = {balanceCountryEnd.Sum(x => x.Count)}");
-                        foreach (var balance in balanceCountryEnd.OrderBy(x=>x.Coin.Id))
+                        foreach (var balance in balanceCountryEnd.OrderBy(x => x.Coin.Id))
                             Console.WriteLine($"Coin({balance.Coin.Country.Id}) = {balance.Count}");
                     }
 
@@ -115,22 +115,24 @@ namespace ConsoleApp5
                 //одна монета у страны должна остаться
                 balance.Count--;
 
+                //исключаем страну монеты из распределения 
+                var neighborsWithoutCoinsOwner = tradeNeighbors.Where(x => x != balance.Coin.Country).ToList();
+
                 //не превышаем половины бюджета
                 if (balance.Count + countSendCoins > sum / 2) balance.Count = sum / 2 - countSendCoins;
 
                 //распределяем все монеты( + первым соседям распределяем остаток)
-                var cntCoin = balance.Count / tradeNeighbors.Count();
-                var remCoin = balance.Count % tradeNeighbors.Count();
+                var cntCoin = balance.Count / neighborsWithoutCoinsOwner.Count();
+                var remCoin = balance.Count % neighborsWithoutCoinsOwner.Count();
 
-                //TODO: сделать! свои монеты страна не берет!!!
-                for (var i = 0; i < tradeNeighbors.Count; i++)
+                for (var i = 0; i < neighborsWithoutCoinsOwner.Count(); i++)
                 {
                     transactions.Add(new Transaction()
                     {
                         Date = currentDate,
                         Coin = balance.Coin,
                         Sender = country,
-                        Recipient = tradeNeighbors[i],
+                        Recipient = neighborsWithoutCoinsOwner[i],
                         Count = cntCoin + (remCoin > i ? 1 : 0)
                     });
                 }
@@ -157,7 +159,7 @@ namespace ConsoleApp5
 
             return db.Transactions
                 .Where(x => (ids.Contains(x.Sender.Id) || ids.Contains(x.Recipient.Id)) && x.Date < date)
-                .Select(x => new Balance {Coin = x.Coin, Count = x.Count * (ids.Contains(x.Recipient.Id) ? 1 : -1)})
+                .Select(x => new Balance { Coin = x.Coin, Count = x.Count * (ids.Contains(x.Recipient.Id) ? 1 : -1) })
                 .GroupBy(x => x.Coin)
                 .Select(x => new Balance
                 {
@@ -170,7 +172,7 @@ namespace ConsoleApp5
         {
             return db.Transactions
                 .Where(x => (x.Sender.Id == countryId || x.Recipient.Id == countryId) && x.Date < date)
-                .Select(x => new Balance {Coin = x.Coin, Count = x.Count * (x.Recipient.Id == countryId ? 1 : -1)})
+                .Select(x => new Balance { Coin = x.Coin, Count = x.Count * (x.Recipient.Id == countryId ? 1 : -1) })
                 .GroupBy(x => x.Coin)
                 .Select(x => new Balance
                 {
@@ -197,11 +199,11 @@ namespace ConsoleApp5
             db.SaveChanges();
         }
 
-        private static void CreateWord(CountryContext db)
+        private static void CreateWorld(CountryContext db)
         {
             var countries = new List<Country>();
 
-            for (var i = 0; i < 100; i++) countries.Add(new Country {Id = i, Name = i.ToString()});
+            for (var i = 0; i < 100; i++) countries.Add(new Country { Id = i, Name = i.ToString() });
 
             db.Countries.AddRange(countries);
 
@@ -239,7 +241,7 @@ namespace ConsoleApp5
                     country.Neighbors.Add(countries.First(x => x.Id == country.Id - 10));
                 }
 
-                db.Coins.Add(new Coin {Id = country.Id, Country = country});
+                db.Coins.Add(new Coin { Id = country.Id, Country = country });
 
                 db.SaveChanges();
             }
